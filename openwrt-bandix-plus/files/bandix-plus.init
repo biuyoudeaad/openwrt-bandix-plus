@@ -18,36 +18,48 @@ append_iface() {
 }
 
 start_service() {
-	local enabled
+	local enable_traffic
 	local tc_order
 	local history_window_minutes
-	local api_bind
+	local host
+	local port
 	local data_dir
 	local log_level
 	local IFACES=""
 
 	config_load 'bandix-plus'
-	config_get_bool enabled 'general' 'enabled' '1'
+	config_get_bool enable_traffic 'general' 'enable_traffic' '0'
 	config_get log_level 'general' 'log_level'
 	config_get tc_order 'general' 'tc_order' 'first'
 	config_get history_window_minutes 'general' 'history_window_minutes' '10'
-	config_get api_bind 'general' 'api_bind' '127.0.0.1:8787'
+	config_get host 'general' 'host' '127.0.0.1'
+	config_get port 'general' 'port' '8787'
 	config_get data_dir 'general' 'data_dir' '/usr/share/bandix-plus'
 	config_list_foreach 'general' 'iface' append_iface
 
-	[ "$enabled" -eq 1 ] || return 1
+	[ "$enable_traffic" -eq 1 ] || return 1
 	[ -n "$IFACES" ] || {
 		logger -t bandix-plus "no iface configured"
 		return 1
 	}
-
+	case "$port" in
+		''|*[!0-9]*)
+			logger -t bandix-plus "invalid port: $port"
+			return 1
+		;;
+	esac
+	[ "$port" -ge 1 ] && [ "$port" -le 65535 ] || {
+		logger -t bandix-plus "port out of range: $port"
+		return 1
+	}
 	procd_open_instance bandix-plus
 	procd_set_param command "$PROG"
-	procd_append_param command --enable-traffic "true"
+	procd_append_param command --enable-traffic
 	procd_append_param command --log-level "$log_level"
 	procd_append_param command --tc-order "$tc_order"
 	procd_append_param command --history-window-minutes "$history_window_minutes"
-	procd_append_param command --api-bind "$api_bind"
+	procd_append_param command --host "$host"
+	procd_append_param command --port "$port"
 	procd_append_param command --data-dir "$data_dir"
 
 	local iface
