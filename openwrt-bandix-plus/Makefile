@@ -98,6 +98,10 @@ define Package/$(PKG_NAME)/install
 	# 安装配置文件
 	$(INSTALL_DIR) $(1)/usr/share/bandix-plus
 	$(INSTALL_CONF) ./files/bandix-plus.config $(1)/etc/config/bandix-plus
+
+	# 安装 UCI defaults（仅补齐缺失配置项，不覆盖用户已有值）
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/99-bandix-plus-defaults $(1)/etc/uci-defaults/99-bandix-plus-defaults
 	
 	# 配置 sysupgrade 保留列表
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
@@ -106,6 +110,18 @@ endef
 
 define Package/$(PKG_NAME)/conffiles
 /etc/config/bandix-plus
+endef
+
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] && exit 0
+
+DEFAULTS_SCRIPT="/etc/uci-defaults/99-bandix-plus-defaults"
+if [ -x "$$DEFAULTS_SCRIPT" ]; then
+	"$$DEFAULTS_SCRIPT" && rm -f "$$DEFAULTS_SCRIPT"
+fi
+
+exit 0
 endef
 
 $(eval $(call BuildPackage,bandix-plus))
