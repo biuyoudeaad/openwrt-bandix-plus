@@ -95,10 +95,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_BIN) ./files/bandix-plus.init $(1)/etc/init.d/bandix-plus
 
-	# 安装配置文件
-	$(INSTALL_DIR) $(1)/usr/share/bandix-plus
-	$(INSTALL_CONF) ./files/bandix-plus.config $(1)/etc/config/bandix_plus
-
 	# 安装 UCI defaults（仅补齐缺失配置项，不覆盖用户已有值）
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/99-bandix-plus-defaults $(1)/etc/uci-defaults/99-bandix-plus-defaults
@@ -108,9 +104,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/bandix-plus.keep $(1)/lib/upgrade/keep.d/bandix-plus
 endef
 
-define Package/$(PKG_NAME)/conffiles
-/etc/config/bandix_plus
-endef
+
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
